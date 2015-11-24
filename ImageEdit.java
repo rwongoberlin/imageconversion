@@ -66,8 +66,9 @@ public static void dupe(int w, int h, Picture pic) {
 			int b = pic.getPixelBlue(x,y);
 			dupe.setPixelColor(x,y,r,g,b); 
 		
-				}				
-}
+			}				
+		}
+
 
 }
 
@@ -116,22 +117,29 @@ public static void dynamic_resize(int w,int h, Picture pic) {
 //----    
 	int newheight=227; //227
 	int newwidth=w-50; //625
-	double[][]energyArray= new double[w][h];
-	double[][]cost= new double[w][h]; 
-	int[][]direction= new int[w][h];
-	int[]seam=new int[h];
+	double[][]energyArrayVertical= new double[w][h];
+	double[][]costVertical= new double[w][h]; 
+	int[][]directionVertical= new int[w][h];
+	int[]seamVertical=new int[h];
+
+	double[][]energyArrayHorizontal= new double[w][h];
+	double[][]costHorizontal = new double[w][h];
+	int[][]directionHorizontal=new int[w][h];
+	int[]horizontalSean=new int[w];
 	//	    energy(pic,energyMap,energyArray,w);
 	//	    computeCost(energyArray, cost, direction, w);
 	for(int i=0; i<newwidth; i++) {
-	    energy(pic,energyArray,w);
-	    computeCost(energyArray, cost, direction, w);
-	    seam=findSeam(cost,direction,w-i);
-	    removeSeam(pic,seam);   										
+	    energy(pic,energyArrayVertical,w);
+	    computeCostVertical(energyArrayVertical, costVertical, directionVertical, w);
+	    seamVertical=findSeamVertical(costVertical,directionVertical,w-i);
+	    removeSeamVertical(pic,seamVertical);   										
 	}
-	pic.display();																							    
+	//pic.display();		
+	pic=resizePic(pic, h,newwidth);	
+	pic.display();	
 }
 
-public static void removeSeam(Picture pic,int[] seam){
+public static void removeSeamVertical(Picture pic,int[] seam){
     for(int j=0;j<pic.getHeight()-1;j++) {
 	for(int i=seam[j];i<pic.getWidth()-1;i++) {
 	    //System.out.println("i is "+i+"j is "+j);
@@ -144,10 +152,19 @@ public static void removeSeam(Picture pic,int[] seam){
     //	pic.display();
 }
 
+public static void removeSeamHorizontal(Picture pic, int[]seam) {
+    for(int j=0;j<pic.getWidth()-1;j++) {
+	for(int i=seam[j];i<pic.getHeight()-1;i++) {
+	    pic.setPixelColor(i,j,pic.getPixelColor(i,j+1));
+	}
+    }
+
+}
+
 //returns energy of any point from 0 to width-1
-public static double pixelEnergy(Picture p, int x, int y) {
+public static double pixelEnergyVertical(Picture p, int x, int y) {
     double left, right;
-    double r, g,b;
+    double r, g, b;
     //left to center
     if(x>0){
 	r=p.getPixelRed(x,y)-p.getPixelRed(x-1,y);
@@ -172,7 +189,7 @@ public static void energy(Picture p, double[][] energyArray, int w) {
     Picture energyMap = new Picture(p.getWidth(),p.getHeight());
     for(int j=0; j<p.getHeight(); j++) {
 	for(int i=0; i<w; i++) {
-	    energyArray[i][j]=pixelEnergy(p,i,j);
+	    energyArray[i][j]=pixelEnergyVertical(p,i,j);
 	    if(energyArray[i][j]>255)
 		energyArray[i][j]=255;
 	    energy=(int)(energyArray[i][j]);
@@ -182,7 +199,7 @@ public static void energy(Picture p, double[][] energyArray, int w) {
     //energyMap.display();
 }
 
-public static void computeCost(double[][] energyArray, double[][] cost, int[][] direction, int w){
+public static void computeCostVertical(double[][] energyArray, double[][] cost, int[][] direction, int w){
     //sets cost of left and right borders to be really high
     for(int i=0; i<energyArray[0].length; i++) {
 	cost[0][i]=9999;
@@ -217,7 +234,7 @@ public static void computeCost(double[][] energyArray, double[][] cost, int[][] 
 }
 
 //finds cheapest seam 
-public static int[] findSeam(double[][] cost, int[][] direction, int w) {
+public static int[] findSeamVertical(double[][] cost, int[][] direction, int w) {
     int height=cost[0].length-1;
     int[]seam= new int[height];
     int placeholder=0;
@@ -235,6 +252,19 @@ public static int[] findSeam(double[][] cost, int[][] direction, int w) {
 	seam[height-j-1]=seam[height-j]+direction[seam[height-j]][height-j];	
     }		
     return seam;
+}
+
+public static Picture resizePic(Picture pic, int w, int h) {
+    w=50;
+    h=50;
+    Picture dup = new Picture(w,h);    
+    for(int i=0;i<w;i++) {
+	for(int j=0;j<h;j++) {
+	   dup.setPixelColor(i,j,pic.getPixelColor(i,j)); 
+	}
+    }
+    dup.display();
+    return dup;
 }
 
 
