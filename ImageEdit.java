@@ -7,16 +7,16 @@ import java.util.*;
 public class ImageEdit {
 	public static void main(String[] args) { 
 		System.out.println(" Welcome to my image editor!"); 
-		System.out.println("Please type in a file name."); //eg. crayons.bmp
+	//	System.out.println("Please type in a file name."); //eg. crayons.bmp
 		
-		String picture=""; 
+		String picture="crayons.bmp"; 
 		int count= 0;
 		Scanner console; 
 		console = new Scanner(System.in); 
-		picture = console.next();
+		//picture = console.next();
 		String pictureName = picture;
-		Picture pic= new Picture(picture);
-		//Picture pic= new Picture("crayons.bmp");
+		//Picture pic= new Picture(picture);
+		Picture pic= new Picture("crayons.bmp");
 		pic.display();
 		int h = pic.getHeight();
 		int w = pic.getWidth(); 
@@ -54,7 +54,7 @@ public class ImageEdit {
 	
 			} 
 			count++;
-		}
+	    }
 }
 	
 public static void dupe(int w, int h, Picture pic) {
@@ -125,20 +125,35 @@ public static void dynamic_resize(int w,int h, Picture pic) {
 	double[][]energyArrayHorizontal= new double[w][h];
 	double[][]costHorizontal = new double[w][h];
 	int[][]directionHorizontal=new int[w][h];
-	int[]horizontalSean=new int[w];
+	int[]seamHorizontal=new int[w];
 	//	    energy(pic,energyMap,energyArray,w);
 	//	    computeCost(energyArray, cost, direction, w);
+/*
 	for(int i=0; i<newwidth; i++) {
-	    energy(pic,energyArrayVertical,w);
+	    energyVertical(pic,energyArrayVertical,w);
 	    computeCostVertical(energyArrayVertical, costVertical, directionVertical, w);
 	    seamVertical=findSeamVertical(costVertical,directionVertical,w-i);
 	    removeSeamVertical(pic,seamVertical);   										
 	}
-	//pic.display();		
-	pic=resizePic(pic, h,newwidth);	
+*/
+	for(int i=0; i<newheight; i++) {
+	    energyHorizontal(pic,energyArrayHorizontal);
+	    computeCostHorizontal(energyArrayHorizontal, costHorizontal, directionHorizontal,w, h);
+	    seamHorizontal=findSeamHorizontal(costHorizontal,directionHorizontal,w,h);
+	    removeSeamHorizontal(pic,seamHorizontal);                
+	}   
+    	//pic.display();		
+	//pic=resizePic(pic, h,newwidth);	
 	pic.display();	
+//*/
 }
 
+
+/*-------
+for removing vertical seams, 
+seam[j] is the x coordinate
+j is the y coordinate
+-------*/
 public static void removeSeamVertical(Picture pic,int[] seam){
     for(int j=0;j<pic.getHeight()-1;j++) {
 	for(int i=seam[j];i<pic.getWidth()-1;i++) {
@@ -152,15 +167,22 @@ public static void removeSeamVertical(Picture pic,int[] seam){
     //	pic.display();
 }
 
+/*-------
+for removing horizontal seams, 
+seam[j] is the y coordinate
+j is the x coordinate
+-------*/
 public static void removeSeamHorizontal(Picture pic, int[]seam) {
-    for(int j=0;j<pic.getWidth()-1;j++) {
-	for(int i=seam[j];i<pic.getHeight()-1;i++) {
-	    pic.setPixelColor(i,j,pic.getPixelColor(i,j+1));
+    for(int i=0;i<pic.getWidth()-1;i++) {
+	for(int j=seam[i];j<pic.getHeight()-1;j++) {
+//	    System.out.println(pic.getWidth()+"i is "+i+"j is + "+j);
+	     pic.setPixelColor(i,j,pic.getPixelColor(i,j+1));
+	   // pic.setPixelColor(i,j,255,255,255);
+	   // pic.display();
 	}
     }
-
 }
-
+	
 //returns energy of any point from 0 to width-1
 public static double pixelEnergyVertical(Picture p, int x, int y) {
     double left, right;
@@ -183,8 +205,31 @@ public static double pixelEnergyVertical(Picture p, int x, int y) {
     else right=0;   
     return left+right;	
 }
-		    
-public static void energy(Picture p, double[][] energyArray, int w) {
+
+//returns energy of any point from 0 to height-1
+public static double pixelEnergyHorizontal(Picture p, int x, int y) {
+    double up, down;
+    double r, g, b;
+    //up to center
+    if(y>0){
+	r=p.getPixelRed(x,y)-p.getPixelRed(x,y-1);
+	g=p.getPixelGreen(x,y)-p.getPixelGreen(x,y-1);
+	b=p.getPixelBlue(x,y)-p.getPixelBlue(x,y-1);
+	up = Math.sqrt(r*r+g*g+b*b);
+    }
+    else up=0;
+    //down to center
+    if(y<p.getWidth()-1){
+	r=p.getPixelRed(x,y)-p.getPixelRed(x,y+1);
+	g=p.getPixelGreen(x,y)-p.getPixelGreen(x,y+1);	
+	b=p.getPixelBlue(x,y)-p.getPixelBlue(x,y+1);
+	down = Math.sqrt(r*r+g*g+b*b); 
+    }   
+    else down=0;   
+    return up+down;	
+}
+	     
+public static void energyVertical(Picture p, double[][] energyArray, int w) {
     int energy;
     Picture energyMap = new Picture(p.getWidth(),p.getHeight());
     for(int j=0; j<p.getHeight(); j++) {
@@ -196,7 +241,22 @@ public static void energy(Picture p, double[][] energyArray, int w) {
 	    energyMap.setPixelColor(i,j,energy,energy,energy);
 	}
     }
-    //energyMap.display();
+    energyMap.display();
+}
+
+public static void energyHorizontal(Picture p, double[][] energyArray) {
+    int energy;
+    Picture energyMap = new Picture(p.getWidth(),p.getHeight());
+    for(int j=0; j<p.getHeight()-1; j++) {
+	for(int i=0; i<p.getWidth(); i++) {
+	    energyArray[i][j]=pixelEnergyHorizontal(p,i,j);
+	    if(energyArray[i][j]>255)
+		energyArray[i][j]=255;
+	    energy=(int)(energyArray[i][j]);
+	    energyMap.setPixelColor(i,j,energy,energy,energy);
+	}
+    }
+    energyMap.display();
 }
 
 public static void computeCostVertical(double[][] energyArray, double[][] cost, int[][] direction, int w){
@@ -224,7 +284,8 @@ public static void computeCostVertical(double[][] energyArray, double[][] cost, 
 	    if(center<left&&center<right){																		
 		lowest=center;																						
 		direction[i][j]=0;																					    
-	    }	    																									if(right<center&&right<left){
+	    }
+	    if(right<center&&right<left){
 		lowest=right;
 		direction[i][j]=1;
 	    }
@@ -232,6 +293,45 @@ public static void computeCostVertical(double[][] energyArray, double[][] cost, 
 	}
     }
 }
+
+public static void computeCostHorizontal(double[][] energyArray, double[][] cost, int[][] direction, int w, int h){
+    //sets cost of top and bottom borders to be really high
+    for(int i=0; i<w; i++) {
+	cost[i][0]=9999;
+	cost[i][h-1]=9999;  
+    }
+    //sets left border to be cost energy of the left border
+    for(int i=1;i<h;i++) {
+	cost[0][i]=energyArray[0][i];
+    }
+    //finds lowest energy travelling path from column to column 
+    //also updates direction based on lowest direction (-1 is up)
+    for(int j=1; j<energyArray[0].length-1;j++) {
+	for(int i=1;i<w-1;i++) {
+	    double up= cost[i-1][j-1];
+	    double center=cost[i-1][j];
+	    double down=cost[i-1][j+1];																				    
+	    double lowest=0;																						
+	    lowest=center;//stand in while I figure out how to handle equivalence
+	    direction[i][j]=0;
+	    if(up<center&&up<down){
+		lowest=up;
+		direction[i][j]=-1;
+	    }																							    
+	    if(center<up&&center<up){																		
+		lowest=center;																						
+		direction[i][j]=0;																					    
+	    }
+	    if(down<center&&down<up){
+		lowest=down;
+		direction[i][j]=1;
+	    }
+	    cost[i][j]=energyArray[i][j]+lowest;
+	}
+    }
+}
+
+
 
 //finds cheapest seam 
 public static int[] findSeamVertical(double[][] cost, int[][] direction, int w) {
@@ -250,6 +350,26 @@ public static int[] findSeamVertical(double[][] cost, int[][] direction, int w) 
     //loops through height of picture adding different parts to the array
     for(int j=1;j<height;j++) {
 	seam[height-j-1]=seam[height-j]+direction[seam[height-j]][height-j];	
+    }		
+    return seam;
+}
+
+//finds cheapest seam 
+public static int[] findSeamHorizontal(double[][] cost, int[][] direction, int w, int h) {
+    int[]seam= new int[w];
+    int placeholder=0;
+    double lowest=cost[0][h-1]; //initializes lowest
+    //loops through left line finding lowest cost starting point
+    for(int i=0; i<h-1;i++){
+	if(cost[0][i+1]<lowest){
+	    lowest=cost[0][placeholder]; //replace lowest
+	    placeholder=i+1; //makes lowest the x value with the lowest cost	
+	}
+    }
+    seam[0]=placeholder; //adds pixel to seam array
+    //loops through height of picture adding different parts to the array
+    for(int j=1;j<w;j++) {
+	seam[w-j-1]=seam[w-j]+direction[w-j][seam[w-j]];	
     }		
     return seam;
 }
